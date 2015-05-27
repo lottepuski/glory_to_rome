@@ -16,7 +16,6 @@ import select
 from communication import send, receive
 from parameters import SERVER, PORT
 
-
 BUFSIZ = 1024
 
 
@@ -92,6 +91,6 @@ if __name__ == "__main__":
         client = ChatClient(sys.argv[1], sys.argv[2])
     elif len(sys.argv) == 4:
         client = ChatClient(sys.argv[1], sys.argv[3], sys.argv[4])
-
+    else:
+        sys.exit('Usage: %s chatid host portno' % sys.argv[0])
     client.cmdloop()
-

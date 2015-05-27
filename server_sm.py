@@ -137,6 +137,7 @@ server_fsm = {
                 "round_middle",
                 "actions_begin"
             ],
+            "callbacks": dict(on_event=manager.handle_thinker),
         },
         {
             "action": "declare_card",
@@ -148,6 +149,7 @@ server_fsm = {
                 "round_middle",
                 "actions_begin"
             ],
+            "callbacks": dict(on_event=manager.handle_card_declare),
         },
         {
             "action": "perform_act",
@@ -159,19 +161,14 @@ server_fsm = {
                 "actions_middle",
                 "round_begin"
             ],
+            "callbacks": dict(on_event=manager.handle_action),
         }
     ],
-    "callbacks": {
-        "on_event": run_round,
-        # "ondeclare_card": run_round,
-        # "onperform_act": run_round,
-    }
 }
 
 
 def server_sm():
-    sm = Machine(server_fsm)
-    return sm
+    return Machine(server_fsm)
 
 
 if __name__ == "__main__":

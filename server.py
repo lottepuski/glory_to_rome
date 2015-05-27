@@ -131,4 +131,3 @@ class ChatServer(object):
 
 if __name__ == "__main__":
     ChatServer().serve()
-

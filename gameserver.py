@@ -7,7 +7,6 @@ import signal
 
 from communication import send, receive
 
-
 BUFSIZ = 1024
 
 
@@ -40,7 +39,6 @@ class GameServer(object):
             o.close()
 
         self.server.close()
-
 
     def get_name(self, client):
         """
