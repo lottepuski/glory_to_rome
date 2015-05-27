@@ -1,5 +1,5 @@
 __author__ = 'aravind'
-from fysom import Fysom
+from state_machine import Machine
 from players import Players
 
 
@@ -127,7 +127,7 @@ server_fsm = {
     "initial": "round_begin",
     "events": [
         {
-            "name": "think",
+            "action": "think",
             "src": [
                 "round_begin",
                 "round_middle"
@@ -139,7 +139,7 @@ server_fsm = {
             ],
         },
         {
-            "name": "declare_card",
+            "action": "declare_card",
             "src": [
                 "round_begin",
                 "round_middle"
@@ -150,7 +150,7 @@ server_fsm = {
             ],
         },
         {
-            "name": "perform_act",
+            "action": "perform_act",
             "src": [
                 "actions_begin",
                 "actions_middle"
@@ -162,15 +162,15 @@ server_fsm = {
         }
     ],
     "callbacks": {
-        "onthink": run_round,
-        "ondeclare_card": run_round,
-        "onperform_act": run_round,
+        "on_event": run_round,
+        # "ondeclare_card": run_round,
+        # "onperform_act": run_round,
     }
 }
 
 
 def server_sm():
-    sm = Fysom(server_fsm)
+    sm = Machine(server_fsm)
     return sm
 
 

@@ -1,0 +1,3 @@
+[submodule "state_machine"]
+	path = state_machine
+	url = https://github.com/lottepuski/state_machine.git
