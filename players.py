@@ -3,15 +3,50 @@ __author__ = 'aravind'
 from utils.ring_buffer import RingBuffer
 from parameters import MAX_PLAYERS
 
+from cards import Card, Deck, GameOver
+
+class UnknownPlayerException(Exception):
+    pass
+
+class Player(object):
+    def __init__(self, name):
+        self.name = name
+        self.influence = 2
+        self.hand_size = 5
+        self.stockpile = []
+        self.vault = []
+        self.clients = []
+        self.projects = []
+        self.powers = []
+        self.hand = []
+
+    def __repr__(self):
+        ''' We can not use vars because of hidden values
+        :return: dictionary of public variables + player's hand
+        '''
+        val = vars(self)
+        val.pop("vault")
+        return val
+
+    def add_to_hand(self, cards):
+        self.hand.extend(cards)
 
 class Players(RingBuffer):
+    ''' Players is the general purpose class that holds the all data relating
+        to players and the game.
+    '''
     def __init__(self):
         super(Players, self).__init__()
+        self.__players_map = dict()
+        self.deck = Deck()
 
     def add_player(self, name):
         if self._get_num_objs() < MAX_PLAYERS:
             assert isinstance(name, str)
             self._add_object(name)
+            player = Player(name)
+            player.add_to_hand(self.deck.get_n_cards(player.hand_size))
+            self.__players_map[name] = player
         else:
             return "Sorry. Already reached maximum number of players"
 
@@ -33,4 +68,27 @@ class Players(RingBuffer):
 
     def get_player(self, index):
         return self._get_obj_at_index(index)
+
+    def add_card_to_hand(self, name, card):
+        '''
+
+        :param name:
+        :param card:
+        :return: True or False
+        '''
+        # assert isinstance(name, str) and self.__players_map.has_key(name)
+        player = self.__players_map[name]
+        if len(player.hand) < player.hand_size:
+            player.hand.append(card)
+            return True
+        return False
+
+    def get_current_state(self, name):
+        try:
+            player = self.__players_map[name]
+        except KeyError:
+            raise UnknownPlayerException, "Player not found"
+
+        return player.__repr__()
+
 

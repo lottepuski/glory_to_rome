@@ -1,13 +1,16 @@
 ###############################################################################
-# The communication module (communication.py)
+# The communication module (sock_utils.py)
 ###############################################################################
-import cPickle
+import json
+import jsonpickle
 import socket
 import struct
 
-marshall = cPickle.dumps
-unmarshall = cPickle.loads
+# marshall = json.dumps
+# unmarshall = json.loads
 
+marshall = jsonpickle.encode
+unmarshall = jsonpickle.decode
 
 def send(channel, *args):
     buf = marshall(args)
@@ -15,7 +18,6 @@ def send(channel, *args):
     size = struct.pack("L", value)
     channel.send(size)
     channel.send(buf)
-
 
 def receive(channel):
     size = struct.calcsize("L")

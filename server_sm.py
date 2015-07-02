@@ -1,6 +1,9 @@
 __author__ = 'aravind'
+import threading
 from state_machine import Machine
 from players import Players
+from communications.gameserver import GameServer
+from communications.game_protocol import *
 
 
 class GameManager(object):
@@ -9,11 +12,82 @@ class GameManager(object):
         self.curr_player = 0
         self.curr_card = None
         self.curr_roles = []
+        self.server = GameServer(handler=self.msg_handler)
+        # Option : consider using name to distinguish multiple server instances
+        t = threading.Thread(target=self.server.serve())
+        t.start()
+        self.init_state_machine()
 
-    def add_players(self, names):
-        assert isinstance(names, list)
-        for x in names:
-            self.players.add_player(x)
+    def init_state_machine(self):
+        _fsm = {
+            "initial": "round_begin",
+            "events": [
+                {
+                    "action": "think",
+                    "src": [
+                        "round_begin",
+                        "round_middle"
+                    ],
+                    "dst": [
+                        "round_begin",
+                        "round_middle",
+                        "actions_begin"
+                    ],
+                    "callbacks": dict(on_event=self.handle_thinker),
+                },
+                {
+                    "action": "declare_card",
+                    "src": [
+                        "round_begin",
+                        "round_middle"
+                    ],
+                    "dst": [
+                        "round_middle",
+                        "actions_begin"
+                    ],
+                    "callbacks": dict(on_event=self.handle_card_declare),
+                },
+                {
+                    "action": "perform_act",
+                    "src": [
+                        "actions_begin",
+                        "actions_middle"
+                    ],
+                    "dst": [
+                        "actions_middle",
+                        "round_begin"
+                    ],
+                    "callbacks": dict(on_event=self.handle_action),
+                }
+            ],
+        }
+        self.sm = Machine(_fsm)
+
+    def msg_handler(self, msg):
+        ''' Modify the player/game state based on inputs received.
+            Always return the players current state so that the client always
+            has the latest state
+        :param msg: see communications.game_protocol for the type of messages
+                    that can be exchanged
+        :return:    state representing the player's hand
+        '''
+        if is_pkt_announce(msg):
+            name = decode(msg)
+            self.add_player(name)
+        elif msg["action"] == "think":
+            self.sm.think(msg)
+        elif msg["action"] == "declare_card":
+            self.sm.declare_card(msg)
+        elif msg["action"] == "perform_act":
+            self.sm.perform_act(msg)
+        return self.get_current_state(name)
+
+    def get_current_state(self, name):
+        return self.players.get_current_state(name)
+
+    def add_player(self, name):
+        assert isinstance(name, str)
+        self.players.add_player(name)
 
     def choose_next_leader(self):
         self.players.choose_next_leader()
@@ -110,79 +184,5 @@ class GameManager(object):
         return True
 
 
-manager = GameManager()
-manager.add_players(['amara', 'bhramara', 'chamara', "dilbara"])
-
-
-def run_round(e):
-    if e.event == "think":
-        return manager.handle_thinker(e)
-    elif e.event == "declare_card":
-        return manager.handle_card_declare(e)
-    elif e.event == "perform_act":
-        return manager.handle_action(e)
-
-
-server_fsm = {
-    "initial": "round_begin",
-    "events": [
-        {
-            "action": "think",
-            "src": [
-                "round_begin",
-                "round_middle"
-            ],
-            "dst": [
-                "round_begin",
-                "round_middle",
-                "actions_begin"
-            ],
-            "callbacks": dict(on_event=manager.handle_thinker),
-        },
-        {
-            "action": "declare_card",
-            "src": [
-                "round_begin",
-                "round_middle"
-            ],
-            "dst": [
-                "round_middle",
-                "actions_begin"
-            ],
-            "callbacks": dict(on_event=manager.handle_card_declare),
-        },
-        {
-            "action": "perform_act",
-            "src": [
-                "actions_begin",
-                "actions_middle"
-            ],
-            "dst": [
-                "actions_middle",
-                "round_begin"
-            ],
-            "callbacks": dict(on_event=manager.handle_action),
-        }
-    ],
-}
-
-
-def server_sm():
-    return Machine(server_fsm)
-
-
-if __name__ == "__main__":
-    sm = server_sm()
-    print "Current", sm.current
-    # sm._enter_state = run_round
-    print manager.players.get_current_order()
-    sm.think(card="Jack")
-    print "Current", sm.current
-    print manager.players.get_current_order()
-    print "Current", sm.current
-    sm.think(card="Card")
-    print manager.players.get_current_order()
-    sm.declare_card(card="Patron")
-    sm.declare_card(card="Patron")
-    sm.declare_card(card="Patron")
-    sm.think(card="Jack")
+if __name__=="__main__":
+    manager = GameManager()
