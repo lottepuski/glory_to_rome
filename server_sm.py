@@ -74,13 +74,18 @@ class GameManager(object):
         if is_pkt_announce(msg):
             name = decode(msg)
             self.add_player(name)
+            return make_pkt_announce_ack(self.get_current_state(name))
         elif msg["action"] == "think":
             self.sm.think(msg)
-        elif msg["action"] == "declare_card":
-            self.sm.declare_card(msg)
+        # old style of handling declaration
+        # elif msg["action"] == "declare_card":
+        #     self.sm.declare_card(msg)
+        elif is_pkt_declare(msg):
+            name, card = decode(msg)
+            print "from server {}".format(card)
+            self.sm.declare_card(name=name, card=card)
         elif msg["action"] == "perform_act":
             self.sm.perform_act(msg)
-        return self.get_current_state(name)
 
     def get_current_state(self, name):
         return self.players.get_current_state(name)
@@ -141,6 +146,7 @@ class GameManager(object):
             self.players.get_player(self.curr_player), e.card)
         if not self.can_accept(e.card):
             print "Invalid declaration"
+        self.players.bring_card_to_play(e.name, e.card)
 
     def handle_card_declare(self, e):
         if e.src == "round_begin":
@@ -184,5 +190,5 @@ class GameManager(object):
         return True
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     manager = GameManager()

@@ -6,6 +6,7 @@ from state_machine.machine import Machine
 import pprint
 from collections import OrderedDict
 
+
 class GameClient(object):
     def __init__(self, name):
         self.client = Client(name)
@@ -37,6 +38,15 @@ class GameClient(object):
             print "something is wrong. state is none"
         self.show_state()
 
+    def declare(self):
+        data = self.client.declare(card=self.__state["hand"][0])
+        state = decode(data)
+        if state is not None:
+            self.parse_state(state)
+        else:
+            print "something is wrong. state is none"
+        self.show_state()
+
     def show_state(self):
         if self.__state is None:
             print "state has not been initialized"
@@ -48,7 +58,6 @@ class GameClient(object):
         self.__parse_obj(state, "hand")
         self.__parse_obj(state, "clients")
         self.__parse_obj(state, "stockpile")
-
 
     def __parse_obj(self, obj, key):
         tmp_obj = obj.pop(key)

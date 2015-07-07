@@ -22,7 +22,7 @@ class GameServer(object):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server.bind(('', port))
-        #print 'Listening to port', port
+        # print 'Listening to port', port
         self.server.listen(backlog)
         # Trap keyboard interrupts
         signal.signal(signal.SIGINT, self.signal_handler)
@@ -49,7 +49,6 @@ class GameServer(object):
         :return:
         """
         return self.player_map[client]
-
 
     def send(self, to, msg):
         flag = False
@@ -80,17 +79,17 @@ class GameServer(object):
             for s in input_ready:
                 if s == self.server:
                     # handle the server socket
-                    client, address = self.server.accept()
+                    client_socket, address = self.server.accept()
                     # address = ip address
-                    print 'Server: got connection {0:d} from {1:s}'.format(client.fileno(), address)
+                    print 'Server: got connection {0:d} from {1:s}'.format(client_socket.fileno(), address)
                     # Read the announce packet
-                    data = receive(client)
-                    print data
+                    data = receive(client_socket)
                     name = decode(data)
-                    self.player_map[client] = name
+                    self.player_map[client_socket] = name
                     self.num_players += 1
-                    self.outputs.append(client)
-                    announce_ack = make_pkt_announce_ack(self.msg_handler(data))
+                    self.outputs.append(client_socket)
+                    inputs.append(client_socket)
+                    announce_ack = self.msg_handler(data)
                     self.send(name, announce_ack)
 
                 elif s == sys.stdin:
@@ -103,11 +102,9 @@ class GameServer(object):
                         data = receive(s)
                         if data:
                             # Send as new client's message...
-                            msg = '\n#[' + self.get_name(s) + ']>> ' + data
-                            # Send data to all except ourselves
-                            for o in self.outputs:
-                                if o != s:
-                                    send(o, msg)
+                            print data
+                            msg = self.msg_handler(data)
+                            send(s, msg)
                         else:
                             print 'Server: %d hung up' % s.fileno()
                             self.num_players -= 1

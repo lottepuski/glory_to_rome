@@ -12,12 +12,14 @@ import struct
 marshall = jsonpickle.encode
 unmarshall = jsonpickle.decode
 
+
 def send(channel, *args):
     buf = marshall(args)
     value = socket.htonl(len(buf))
     size = struct.pack("L", value)
     channel.send(size)
     channel.send(buf)
+
 
 def receive(channel):
     size = struct.calcsize("L")

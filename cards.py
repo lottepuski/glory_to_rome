@@ -2,6 +2,7 @@ __author__ = 'aravind'
 
 from random import shuffle
 
+
 class GameOver(Exception):
     pass
 
@@ -32,6 +33,7 @@ class Card(object):
                 setattr(self, k, getattr(Role, v, None))
             else:
                 setattr(self, k, v)
+
 
 class Deck(object):
     def __init__(self):

@@ -42,35 +42,35 @@ class Client(object):
             print 'Could not connect to chat server @%d' % self.port
             sys.exit(1)
 
-    def cmdloop(self):
-        while not self.flag:
-            try:
-                sys.stdout.write(self.prompt)
-                sys.stdout.flush()
-
-                # Wait for input from stdin & socket
-                input_ready, output_ready, except_ready = \
-                    select.select([0, self.sock], [], [])
-
-                for i in input_ready:
-                    if i == 0:
-                        data = sys.stdin.readline().strip()
-                        c_data = {'data': data}
-                        if data: send(self.sock, c_data)
-                    elif i == self.sock:
-                        data = receive(self.sock)
-                        if not data:
-                            print 'Shutting down.'
-                            self.flag = True
-                            break
-                        else:
-                            sys.stdout.write(data + '\n')
-                            sys.stdout.flush()
-
-            except KeyboardInterrupt:
-                print 'Interrupted.'
-                self.sock.close()
-                break
+    # def cmdloop(self):
+    #     while not self.flag:
+    #         try:
+    #             sys.stdout.write(self.prompt)
+    #             sys.stdout.flush()
+    #
+    #             # Wait for input from stdin & socket
+    #             input_ready, output_ready, except_ready = \
+    #                 select.select([0, self.sock], [], [])
+    #
+    #             for i in input_ready:
+    #                 if i == 0:
+    #                     data = sys.stdin.readline().strip()
+    #                     c_data = {'data': data}
+    #                     if data: send(self.sock, c_data)
+    #                 elif i == self.sock:
+    #                     data = receive(self.sock)
+    #                     if not data:
+    #                         print 'Shutting down.'
+    #                         self.flag = True
+    #                         break
+    #                     else:
+    #                         sys.stdout.write(data + '\n')
+    #                         sys.stdout.flush()
+    #
+    #         except KeyboardInterrupt:
+    #             print 'Interrupted.'
+    #             self.sock.close()
+    #             break
 
     def send(self, data):
         send(self.sock, data)
@@ -80,9 +80,15 @@ class Client(object):
         self.send(pkt)
         return receive(self.sock)
 
+    def declare(self, card=None):
+        pkt = make_pkt_declare(name=self.name, card=card)
+        self.send(pkt)
+        return receive(self.sock)
+
+
 if __name__ == "__main__":
     name = sys.argv[1]
     server = (SERVER, sys.argv[2])[len(sys.argv) >= 3]
     port = (PORT, sys.argv[3])[len(sys.argv) >= 4]
     client = Client(name, server, port)
-    client.cmdloop()
+    # client.cmdloop()
