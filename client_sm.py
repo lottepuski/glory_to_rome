@@ -13,7 +13,6 @@ class GameClient(object):
         self.name = name
         self.init_state_machine()
         self.__state = None
-        self.curr_state = ""
         self.pp = pprint.PrettyPrinter(indent=4)
 
     def init_state_machine(self):

@@ -7,7 +7,7 @@ class UnknownPacketType(Exception):
 
 class PacketType():
     Announce, AnnounceAck, Declare, DeclareAck, \
-    Act, ActAck = range(6)
+        Act, ActAck, Think, ThinkAck = range(8)
 
     @classmethod
     def is_pkt_announce(cls, pkt_type):
@@ -32,6 +32,14 @@ class PacketType():
     @classmethod
     def is_pkt_act_ack(cls, pkt_type):
         return cls.ActAck == pkt_type
+
+    @classmethod
+    def is_pkt_think(cls, pkt_type):
+        return cls.Think == pkt_type
+
+    @classmethod
+    def is_pkt_think_ack(cls, pkt_type):
+        return cls.ThinkAck == pkt_type
 
 
 def make_pkt_announce(name=None):
@@ -62,6 +70,17 @@ def make_pkt_act(name=None, actions=None):
 
 
 def make_pkt_act_ack(state=None):
+    assert isinstance(state, dict)
+    return dict(pkt_type=PacketType.ActAck, state=state)
+
+
+def make_pkt_think(name=None, card=None):
+    assert name is not None
+    assert card is not None
+    return dict(pkt_type=PacketType.Think, name=name, card=card)
+
+
+def make_pkt_think_ack(state=None):
     assert isinstance(state, dict)
     return dict(pkt_type=PacketType.ActAck, state=state)
 

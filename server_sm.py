@@ -74,21 +74,24 @@ class GameManager(object):
         if is_pkt_announce(msg):
             name = decode(msg)
             self.add_player(name)
-            return make_pkt_announce_ack(self.get_current_state(name))
-        elif msg["action"] == "think":
-            self.sm.think(msg)
-        # old style of handling declaration
-        # elif msg["action"] == "declare_card":
-        #     self.sm.declare_card(msg)
+            state = self.get_current_state(name)
+            return make_pkt_announce_ack(state)
         elif is_pkt_declare(msg):
             name, card = decode(msg)
-            print "from server {}".format(card)
             self.sm.declare_card(name=name, card=card)
-        elif msg["action"] == "perform_act":
-            self.sm.perform_act(msg)
+            state = self.get_current_state(name)
+            return make_pkt_declare_ack(state)
+        elif is_pkt_act(msg):
+            name, card = decode(msg)
+            self.sm.perform_act(name=name, card=card)
+            state = self.get_current_state(name)
+            return make_pkt_act_ack(state)
 
     def get_current_state(self, name):
-        return self.players.get_current_state(name)
+        state = self.players.get_current_state(name)
+        leader_name = self.players.get_current_leader() == name
+        state["is_current_leader"] = 1 if leader_name else 0
+        return state
 
     def add_player(self, name):
         assert isinstance(name, str)
@@ -143,7 +146,7 @@ class GameManager(object):
 
     def validate_declare(self, e):
         print "{} has declared the card {}".format(
-            self.players.get_player(self.curr_player), e.card)
+            e.name, e.card)
         if not self.can_accept(e.card):
             print "Invalid declaration"
         self.players.bring_card_to_play(e.name, e.card)
@@ -174,6 +177,7 @@ class GameManager(object):
         return e.dst
 
     def can_accept(self, card):
+        # TODO: Modify this method so that we check if e.name is current_leader or not
         if self.curr_player == 0:
             self.curr_card = card
             self.curr_roles.append(card)
