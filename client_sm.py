@@ -39,6 +39,7 @@ class GameClient(object):
 
     def declare(self):
         data = self.client.declare(card=self.__state["hand"][0])
+        print data
         state = decode(data)
         if state is not None:
             self.parse_state(state)
@@ -54,11 +55,17 @@ class GameClient(object):
 
     def parse_state(self, state):
         self.__state = {}
-        self.__parse_obj(state, "hand")
-        self.__parse_obj(state, "clients")
-        self.__parse_obj(state, "stockpile")
+        self.__parse_object(state, "card_in_play")
+        self.__parse_iterable(state, "hand")
+        self.__parse_iterable(state, "clients")
+        self.__parse_iterable(state, "stockpile")
 
-    def __parse_obj(self, obj, key):
+    def __parse_object(self, obj, key):
+        tmp_obj = obj.pop(key)
+        if tmp_obj:
+            self.__state[key] = vars(tmp_obj)
+
+    def __parse_iterable(self, obj, key):
         tmp_obj = obj.pop(key)
         t = []
         for card in tmp_obj:

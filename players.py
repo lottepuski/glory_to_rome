@@ -1,8 +1,8 @@
 __author__ = 'aravind'
 
+import copy
 from utils.ring_buffer import RingBuffer
 from parameters import MAX_PLAYERS
-
 from cards import Card, Deck, GameOver
 
 
@@ -27,7 +27,7 @@ class Player(object):
         ''' We can not use vars because of hidden values
         :return: dictionary of public variables + player's hand
         '''
-        val = vars(self)
+        val = copy.deepcopy(vars(self))
         val.pop("vault")
         return val
 
@@ -35,7 +35,7 @@ class Player(object):
         ''' Return player's state to other players
         :return:
         '''
-        val = vars(self)
+        val = copy.deepcopy(vars(self))
         val.pop("vault")
         val.pop("hand")
         return val
@@ -88,7 +88,6 @@ class Players(RingBuffer):
 
     def add_card_to_hand(self, name, card):
         '''
-
         :param name:
         :param card:
         :return: True or False
@@ -110,11 +109,11 @@ class Players(RingBuffer):
 
     def bring_card_to_play(self, name, card):
         '''
-
         :param card: dict
         :return: None
         '''
         player = self.get_player_by_name(name)
+        print player.name
         for i, x in enumerate(player.hand):
-            if x == card:
+            if x.equal(card):
                 player.card_in_play = player.hand.pop(i)

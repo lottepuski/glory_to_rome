@@ -34,6 +34,15 @@ class Card(object):
             else:
                 setattr(self, k, v)
 
+    def equal(self, card):
+        assert(isinstance(card, dict) or isinstance(card, Card))
+        if isinstance(card, dict):
+            name = card.get("structure", None)
+            return self.structure == name
+        else:
+            return self.structure == card.structure
+
+
 
 class Deck(object):
     def __init__(self):

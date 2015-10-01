@@ -2,9 +2,13 @@ __author__ = 'aravind'
 from unittest import TestCase
 from client_sm import GameClient
 
-client = GameClient("amara")
-client.announce()
-client.declare()
+amara = GameClient("amara")
+amara.announce()
+amara.declare()
+
+bhramara = GameClient("bhramara")
+bhramara.announce()
+bhramara.declare()
 
 
 class TestGameManager(TestCase):

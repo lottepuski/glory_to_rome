@@ -13,10 +13,10 @@ class GameManager(object):
         self.curr_card = None
         self.curr_roles = []
         self.server = GameServer(handler=self.msg_handler)
+        self.init_state_machine()
         # Option : consider using name to distinguish multiple server instances
         t = threading.Thread(target=self.server.serve())
         t.start()
-        self.init_state_machine()
 
     def init_state_machine(self):
         _fsm = {
@@ -179,11 +179,11 @@ class GameManager(object):
     def can_accept(self, card):
         # TODO: Modify this method so that we check if e.name is current_leader or not
         if self.curr_player == 0:
-            self.curr_card = card
+            self.curr_card = card['role']
             self.curr_roles.append(card)
             self.go_to_next_player()
             return True
-        elif self.curr_card == card:
+        elif self.curr_card == card['role']:
             self.curr_roles.append(card)
             self.go_to_next_player()
             return True
