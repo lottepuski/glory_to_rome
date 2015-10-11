@@ -38,14 +38,22 @@ class GameClient(object):
         self.show_state()
 
     def declare(self):
-        data = self.client.declare(card=self.__state["hand"][0])
-        print data
-        state = decode(data)
-        if state is not None:
-            self.parse_state(state)
-        else:
-            print "something is wrong. state is none"
-        self.show_state()
+        card = self.pick_card()
+        if card:
+            data = self.client.declare(card=card)
+            state = decode(data)
+            if state is not None:
+                self.parse_state(state)
+            else:
+                print "something is wrong. state is none"
+            self.show_state()
+
+    def pick_card(self):
+        if self.is_current_leader:
+            return self.__state["hand"][0]
+        for card in self.__state["hand"]:
+            if card["role"] == self.current_role:
+                return card
 
     def show_state(self):
         if self.__state is None:
@@ -54,6 +62,8 @@ class GameClient(object):
         self.pp.pprint(self.__state)
 
     def parse_state(self, state):
+        self.is_current_leader = state["is_current_leader"]
+        self.current_role = state["current_role"]
         self.__state = {}
         self.__parse_object(state, "card_in_play")
         self.__parse_iterable(state, "hand")

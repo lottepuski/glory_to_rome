@@ -91,11 +91,13 @@ class GameManager(object):
         state = self.players.get_current_state(name)
         leader_name = self.players.get_current_leader() == name
         state["is_current_leader"] = 1 if leader_name else 0
+        state["current_role"] = self.curr_card
         return state
 
     def add_player(self, name):
         assert isinstance(name, str)
         self.players.add_player(name)
+        self.curr_player += 1
 
     def choose_next_leader(self):
         self.players.choose_next_leader()
