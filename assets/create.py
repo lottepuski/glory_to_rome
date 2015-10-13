@@ -31,14 +31,14 @@ class Card(svgwrite.container.Group):
         :param insert: Insert location in mm. type: int
         :param fill: Color
         """
-        # TODO:
-        #  Process id to remove spaces etc.
-        #  For title embed tspan
-        #  E.g. "Ludus Magnus" and other long/two-word names
-        super(Card, self).__init__(id=name, fill=fill)
+        if len(name.split(" ")) > 1:
+            tmp_id = "_".join(name.split(" "))
+        else:
+            tmp_id = name
+        super(Card, self).__init__(id=tmp_id, fill=fill)
         self.dwg = dwg
         self.insert = (insert[0] * mm, insert[1] * mm)
-        self.id = name
+        self.name = name
         self.color = color
         self.material_name = material_name
         self.role_name = role_name
@@ -46,8 +46,8 @@ class Card(svgwrite.container.Group):
         self.base = Rectangle(dwg, insert=self.insert).base
 
         # Locations - Card specific
-        self.title_x = 15
-        self.title_y = 10
+        self.title_x = insert[0] + 15
+        self.title_y = insert[1] + 10
         self.role_x = 4
         self.role_y = 10
         self.material_x = 33
@@ -68,9 +68,25 @@ class Card(svgwrite.container.Group):
             self.add(coin)
 
     def make_title(self):
+        words = self.name.split(" ")
         title_loc = (self.title_x * mm, self.title_y * mm)
-        title = self.dwg.text(self.id.upper(), insert=self.insert, dx=[title_loc[0]], dy=[title_loc[1]],
-                              style="font-size:24px; font-family:Arial", fill='black', stroke='black')
+        if len(words) == 1:
+            title = self.dwg.text(self.name.upper(),
+                                  x=[title_loc[0]], y=[title_loc[1]],
+                                  style="font-size:24px; font-family:Arial",
+                                  fill='black', stroke='black')
+        else:
+            title = self.dwg.text("",
+                                  x=[title_loc[0]], y=[title_loc[1]],
+                                  style="font-size:24px;" +
+                                        "font-family:Arial;" +
+                                        "display-align:center",
+                                  fill='black', stroke='black')
+            for ix, word in enumerate(words):
+                title_loc = (self.title_x * mm, (self.title_y + 7*ix) * mm)
+                tword = self.dwg.tspan(word.upper(),
+                                       x=[title_loc[0]], y=[title_loc[1]])
+                title.add(tword)
         return title
 
     def make_coins(self):
@@ -205,7 +221,7 @@ def basic_shapes(name):
     forum = Patron(dwg=dwg, insert=(10, 210), name="forum")
     basilica = Patron(dwg=dwg, insert=(90, 210), name="Basilica")
     coliseum = Merchant(dwg=dwg, insert=(180, 210), name="Coliseum")
-    sewer = Merchant(dwg=dwg, insert=(270, 210), name="Sewer")
+    circus_max = Merchant(dwg=dwg, insert=(270, 210), name="Circus Maximus")
 
     dwg.add(circus)
     dwg.add(palisade)
@@ -216,9 +232,9 @@ def basic_shapes(name):
     dwg.add(archway)
     dwg.add(bath)
     dwg.add(forum)
-    dwg.add(coliseum)
-    dwg.add(sewer)
     dwg.add(basilica)
+    dwg.add(coliseum)
+    dwg.add(circus_max)
     dwg.save()
 
 
