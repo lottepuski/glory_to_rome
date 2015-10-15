@@ -1,5 +1,6 @@
 import svgwrite
 from svgwrite import cm, mm, container
+from cards import Deck
 
 ORIGIN_X = 10
 ORIGIN_Y = 10
@@ -23,8 +24,9 @@ class Rectangle(object):
 
 
 class Card(svgwrite.container.Group):
-    def __init__(self, dwg, name="Card", insert=ORIGIN, fill='white', color='green', material_name="Wood",
-                 role_name="Craftsman"):
+    def __init__(self, dwg, name="Card", insert=ORIGIN,
+                 fill='white', color='green', material_name="Wood",
+                 role_name="Craftsman", description="Sample description"):
         """
         :param dwg: svgwrite.Drawing
         :param name: Name of the card
@@ -42,11 +44,28 @@ class Card(svgwrite.container.Group):
         self.color = color
         self.material_name = material_name
         self.role_name = role_name
+        self.description = description
 
         self.base = Rectangle(dwg, insert=self.insert).base
 
+        # LUT for title positions
+        self.lut_title_pos = [
+            22, 22, 22,
+            22, 22, 18,
+            15, 15, 12,
+            10, 10, 10,
+             8,  8,  8
+        ]
         # Locations - Card specific
-        self.title_x = insert[0] + 15
+        x = self.name.split(" ")
+        if len(x) > 1:
+            max_len = max(map(len, x))
+        else:
+            max_len = len(self.name)
+        if max_len > 14:
+            max_len = 14
+
+        self.title_x = insert[0] + self.lut_title_pos[max_len]
         self.title_y = insert[1] + 10
         self.role_x = 4
         self.role_y = 10
@@ -54,18 +73,29 @@ class Card(svgwrite.container.Group):
         self.material_y = 87
         self.coin_one_x = 6 + insert[0]
         self.coin_one_y = 84 + insert[1]
+        self.description_x = insert[0] + 13
+        self.description_y = insert[1] + 20
+        self.lut_description_pos = [
+            20, 37, 35,
+            33, 30, 25,
+             20,  10,  0,
+             0,  0,  0
+        ]
 
     def draw(self):
         title = self.make_title()
         role = self.make_role(self.role_name)
         material = self.make_material(self.material_name)
         coins = self.make_coins()
+        description = self.make_description()
         self.add(self.base)
         self.add(title)
         self.add(role)
         self.add(material)
         for coin in coins:
             self.add(coin)
+        self.add(description)
+
 
     def make_title(self):
         words = self.name.split(" ")
@@ -83,11 +113,57 @@ class Card(svgwrite.container.Group):
                                         "display-align:center",
                                   fill='black', stroke='black')
             for ix, word in enumerate(words):
-                title_loc = (self.title_x * mm, (self.title_y + 7*ix) * mm)
+                title_loc = (self.title_x * mm, (self.title_y + 7 * ix) * mm)
                 tword = self.dwg.tspan(word.upper(),
                                        x=[title_loc[0]], y=[title_loc[1]])
                 title.add(tword)
         return title
+
+    def make_lines(self, words, line_len):
+        lines = []
+        curr_line_len = 0
+        curr_line = ""
+        # updated = False
+        for word in words:
+            word_len = len(word)
+            if curr_line_len + word_len < line_len:
+                # if word == "LEGIONARY":
+                #     print "Not updating ",
+                curr_line += word + " "
+                curr_line_len += word_len + 1
+                # updated = False
+            else:
+                # if word == "LEGIONARY":
+                #     print "Updating",
+                lines.append(curr_line)
+                curr_line = word + " "
+                curr_line_len = word_len + 1
+                # updated = True
+            # if word == "LEGIONARY":
+            #     print curr_line
+        # if not updated:
+        #     lines.append(curr_line)
+        lines.append(curr_line)
+        return lines
+
+    def make_description(self):
+        words = self.description.split(" ")
+        lines = self.make_lines(words, 18)
+        max_len = len(lines) if len(lines) < 12 else 12
+        loc = (self.description_x * mm,
+               (self.description_y + self.lut_description_pos[max_len]) * mm)
+        description = self.dwg.text("",
+                                  x=[loc[0]], y=[loc[1]],
+                                  style="font-size:16px;" +
+                                        "font-family:Arial;" +
+                                        "display-align:center",
+                                  fill='slategrey', stroke='slategrey')
+        for ix, line in enumerate(lines):
+            loc = (self.description_x * mm, (self.description_y + self.lut_description_pos[max_len] + 7 * ix) * mm)
+            tline = self.dwg.tspan(line, x=[loc[0]], y=[loc[1]])
+            description.add(tline)
+        return description
+
 
     def make_coins(self):
         """
@@ -125,28 +201,33 @@ class Card(svgwrite.container.Group):
 
 
 class Craftsman(Card):
-    def __init__(self, dwg, name="Card", insert=ORIGIN, fill='white', color='green'):
+    def __init__(self, dwg, name="Card", insert=ORIGIN, fill='white', color='green', description='description'):
         super(Craftsman, self).__init__(dwg=dwg, name=name, insert=insert, fill=fill, color=color)
         self.material_name = "Wood"
+        self.description = description
         self.role_name = "Craftsman"
+        self.role_y = 7
         self.draw()
 
 
 class Laborer(Card):
-    def __init__(self, dwg, name="Card", insert=ORIGIN, fill='white', color='gold'):
+    def __init__(self, dwg, name="Card", insert=ORIGIN, fill='white', color='gold', description='description'):
         super(Laborer, self).__init__(dwg=dwg, name=name, insert=insert, fill=fill, color=color),
         self.material_name = "Rubble"
+        self.description = description
         self.role_name = "Laborer"
         self.material_x = 30
-        self.role_y = 20
+        # self.role_y = 15
         self.draw()
 
 
 class Architect(Card):
-    def __init__(self, dwg, name="Card", insert=ORIGIN, fill='white', color='slategrey'):
+    def __init__(self, dwg, name="Card", insert=ORIGIN, fill='white', color='slategrey', description='description'):
         super(Architect, self).__init__(dwg=dwg, name=name, insert=insert, fill=fill, color=color),
         self.material_name = "Concrete"
+        self.description = description
         self.role_name = "Architect"
+        self.role_y = 7
         self.material_x = 21
         self.draw()
 
@@ -158,10 +239,12 @@ class Architect(Card):
 
 
 class Legionary(Card):
-    def __init__(self, dwg, name="Card", insert=ORIGIN, fill='white', color='firebrick'):
+    def __init__(self, dwg, name="Card", insert=ORIGIN, fill='white', color='firebrick', description='description'):
         super(Legionary, self).__init__(dwg=dwg, name=name, insert=insert, fill=fill, color=color),
         self.material_name = "Brick"
+        self.description = description
         self.role_name = "Legionary"
+        self.role_y = 7
         # self.material_x = 21
         self.draw()
 
@@ -173,9 +256,10 @@ class Legionary(Card):
 
 
 class Patron(Card):
-    def __init__(self, dwg, name="Card", insert=ORIGIN, fill='white', color='purple'):
+    def __init__(self, dwg, name="Card", insert=ORIGIN, fill='white', color='purple', description='description'):
         super(Patron, self).__init__(dwg=dwg, name=name, insert=insert, fill=fill, color=color),
         self.material_name = "Marble"
+        self.description = description
         self.role_name = "Patron"
         self.material_x = 30
         self.role_y = 20
@@ -191,9 +275,10 @@ class Patron(Card):
 
 
 class Merchant(Card):
-    def __init__(self, dwg, name="Card", insert=ORIGIN, fill='white', color='cornflowerblue'):
+    def __init__(self, dwg, name="Card", insert=ORIGIN, fill='white', color='cornflowerblue', description='description'):
         super(Merchant, self).__init__(dwg=dwg, name=name, insert=insert, fill=fill, color=color),
         self.material_name = "Stone"
+        self.description = description
         self.role_name = "Merchant"
         # self.material_x = 21
         self.role_y = 15
@@ -238,5 +323,40 @@ def basic_shapes(name):
     dwg.save()
 
 
+def make_cards(name='cards.svg'):
+    dwg = svgwrite.Drawing(filename=name, debug=True)
+    deck = Deck()
+    pos = [[20, 20],
+           [20, 120],
+           [20, 220],
+           [20, 320],
+           [20, 420],
+           [20, 520]]
+    for c in deck.uniq:
+        if c.role == "Craftsman":
+            card = Craftsman(dwg=dwg, insert=pos[0], name=c.structure, description=c.function)
+            pos[0][0] += 100
+        elif c.role == "Laborer":
+            card = Laborer(dwg=dwg, insert=pos[1], name=c.structure, description=c.function)
+            pos[1][0] += 100
+        elif c.role == "Architect":
+            card = Architect(dwg=dwg, insert=pos[2], name=c.structure, description=c.function)
+            pos[2][0] += 100
+        elif c.role == "Legionary":
+            card = Legionary(dwg=dwg, insert=pos[3], name=c.structure, description=c.function)
+            pos[3][0] += 100
+        elif c.role == "Patron":
+            card = Patron(dwg=dwg, insert=pos[4], name=c.structure, description=c.function)
+            pos[4][0] += 100
+        elif c.role == "Merchant":
+            card = Merchant(dwg=dwg, insert=pos[5], name=c.structure, description=c.function)
+            pos[5][0] += 100
+        else:
+            card = Card(dwg=dwg, insert=pos[0], name=c.structure, description=c.function)
+            pos[0][0] += 100
+        dwg.add(card)
+    dwg.save()
+
+
 if __name__ == '__main__':
-    basic_shapes('card.svg')
+    make_cards('cards.svg')
