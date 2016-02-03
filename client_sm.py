@@ -35,10 +35,10 @@ class GameClient(object):
             self.parse_state(state)
         else:
             print "something is wrong. state is none"
-        self.show_state()
 
-    def declare(self):
-        card = self.pick_card()
+    def declare(self, card=None):
+        if card is None:
+            card = self.pick_card()
         if card:
             data = self.client.declare(card=card)
             state = decode(data)
